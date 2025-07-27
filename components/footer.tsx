@@ -1,7 +1,13 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Building2, Facebook, Twitter, Linkedin, Instagram } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Building2,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Twitter,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -12,10 +18,11 @@ export default function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <Building2 className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">CareerInsight</span>
+              <span className="text-xl font-bold">Trucareer</span>
             </Link>
             <p className="text-muted-foreground">
-              Your trusted platform for company reviews, salary insights, and career guidance.
+              Your trusted platform for company reviews, salary insights, and
+              career guidance.
             </p>
             <div className="flex space-x-4">
               <Button variant="ghost" size="icon">
@@ -37,16 +44,28 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <div className="space-y-2">
-              <Link href="/companies" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/companies"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Browse Companies
               </Link>
-              <Link href="/salaries" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/salaries"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Salary Guide
               </Link>
-              <Link href="/reviews" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/reviews"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Latest Reviews
               </Link>
-              <Link href="/jobs" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/jobs"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Job Search
               </Link>
             </div>
@@ -56,16 +75,28 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Support</h3>
             <div className="space-y-2">
-              <Link href="/help" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/help"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Help Center
               </Link>
-              <Link href="/contact" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/contact"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Contact Us
               </Link>
-              <Link href="/privacy" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/privacy"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="block text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="/terms"
+                className="block text-muted-foreground hover:text-primary transition-colors"
+              >
                 Terms of Service
               </Link>
             </div>
@@ -75,7 +106,8 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Stay Updated</h3>
             <p className="text-muted-foreground text-sm">
-              Get the latest company insights and career tips delivered to your inbox.
+              Get the latest company insights and career tips delivered to your
+              inbox.
             </p>
             <div className="space-y-2">
               <Input placeholder="Enter your email" />
@@ -85,9 +117,11 @@ export default function Footer() {
         </div>
 
         <div className="border-t mt-12 pt-8 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} CareerInsight. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} Trucareer. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

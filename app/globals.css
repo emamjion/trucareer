@@ -88,3 +88,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+.hero-section {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)),
+    url("/hero-section.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
