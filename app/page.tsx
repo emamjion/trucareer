@@ -3,7 +3,6 @@ import CompanyCard from "@/components/company-card";
 import CompanyComparison from "@/components/company-comparison";
 import Footer from "@/components/footer";
 import HeroSection from "@/components/HeroSection";
-import JobSearchSection from "@/components/job-search-section";
 import Navigation from "@/components/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -370,7 +369,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <JobSearchSection />
+      {/* <JobSearchSection /> */}
 
       <CompanyComparison />
 

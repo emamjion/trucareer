@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Building2, Menu } from "lucide-react";
+import { Building2, Menu, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -11,13 +11,15 @@ export default function Navigation() {
 
   const navItems = [
     { href: "/", label: "Home" },
-    { href: "/companies", label: "Companies" },
-    { href: "/salaries", label: "Salaries" },
-    { href: "/reviews", label: "Reviews" },
+    { href: "/browse-salaries", label: "Browse Salaries" },
+    { href: "/salary-stories", label: "Salary Stories" },
+    { href: "/contribute-salary", label: "Contribute Your Salary" },
+    { href: "/paid-fairly", label: "Are You Paid Fairly" },
   ];
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      {/* Top Row - Logo and Auth Buttons */}
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -26,22 +28,13 @@ export default function Navigation() {
             <span className="text-xl font-bold">Trucareer</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium transition-colors hover:text-primary"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button>Login</Button>
+            <Button className="bg-green-600 hover:bg-green-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Contribute
+            </Button>
+            <Button variant="outline">Login</Button>
           </div>
 
           {/* Mobile Menu */}
@@ -64,11 +57,37 @@ export default function Navigation() {
                   </Link>
                 ))}
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Button className="justify-start">Login</Button>
+                  <Button className="justify-start bg-green-600 hover:bg-green-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Contribute
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start bg-transparent"
+                  >
+                    Login
+                  </Button>
                 </div>
               </div>
             </SheetContent>
           </Sheet>
+        </div>
+      </div>
+
+      {/* Bottom Row - Navigation Menu (Desktop Only) */}
+      <div className="hidden md:block border-t">
+        <div className="container mx-auto px-4">
+          <div className="flex h-12 items-center justify-center space-x-8">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium transition-colors hover:text-primary py-3"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </nav>

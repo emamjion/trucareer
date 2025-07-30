@@ -13,11 +13,11 @@ const HeroSection = () => {
     <section className="hero-section py-20">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
             Find Your Dream Job with{" "}
-            <span className="text-primary">Real Reviews</span>
+            <span className="text-white">Real Reviews</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white mb-8 max-w-2xl mx-auto">
             Get insider insights on company culture, salaries, and work-life
             balance from real employees. Make informed career decisions.
           </p>
@@ -40,11 +40,11 @@ const HeroSection = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <stat.icon className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">
-                  {stat.label}
+                <stat.icon className="h-8 w-8 mx-auto mb-2 text-white" />
+                <div className="text-2xl font-bold text-white">
+                  {stat.value}
                 </div>
+                <div className="text-sm text-white">{stat.label}</div>
               </div>
             ))}
           </div>
