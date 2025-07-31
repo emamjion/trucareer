@@ -12,7 +12,7 @@ export default function Navigation() {
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/salaries", label: "Browse Salaries" },
-    { href: "/salary-stories", label: "Salary Stories" },
+    { href: "/stories", label: "Salary Stories" },
     { href: "/contribute-salary", label: "Contribute Your Salary" },
     { href: "/paid-fairly", label: "Are You Paid Fairly?" },
   ];
@@ -30,10 +30,12 @@ export default function Navigation() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button className="">
-              <Plus className="h-4 w-4 mr-2" />
-              Contribute
-            </Button>
+            <Link href={"/contribute-salary"}>
+              <Button className="">
+                <Plus className="h-4 w-4 mr-2" />
+                Contribute
+              </Button>
+            </Link>
             <Button variant="outline">Login</Button>
           </div>
 
@@ -67,10 +69,12 @@ export default function Navigation() {
                   );
                 })}
                 <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Button className="justify-start ">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Contribute
-                  </Button>
+                  <Link href={"/contribute-salary"}>
+                    <Button className="justify-start ">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Contribute
+                    </Button>
+                  </Link>
                   <Button
                     variant="outline"
                     className="justify-start bg-transparent"
