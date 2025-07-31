@@ -14,7 +14,7 @@ export default function Navigation() {
     { href: "/salaries", label: "Browse Salaries" },
     { href: "/salary-stories", label: "Salary Stories" },
     { href: "/contribute-salary", label: "Contribute Your Salary" },
-    { href: "/paid-fairly", label: "Are You Paid Fairly" },
+    { href: "/paid-fairly", label: "Are You Paid Fairly?" },
   ];
 
   return (
@@ -47,7 +47,7 @@ export default function Navigation() {
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col space-y-4 mt-8">
                 {navItems.map((item) => {
-                  const isDisabled = item.label === "Are You Paid Fairly";
+                  const isDisabled = item.label === "Are You Paid Fairly?";
                   return (
                     <Link
                       key={item.href}
@@ -89,7 +89,7 @@ export default function Navigation() {
         <div className="container mx-auto px-4">
           <div className="flex h-12 items-center justify-start space-x-8">
             {navItems.map((item) => {
-              const isDisabled = item.label === "Are You Paid Fairly";
+              const isDisabled = item.label === "Are You Paid Fairly?";
               return (
                 <Link
                   key={item.href}
