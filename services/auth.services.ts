@@ -16,7 +16,7 @@ export const getUserInfo = () => {
     const decodedData = decodedToken(authToken);
     return {
       ...decodedData,
-      role: decodedData?.role.toLowerCase(),
+      role: decodedData?.role?.toLowerCase(),
     };
   }
 };
