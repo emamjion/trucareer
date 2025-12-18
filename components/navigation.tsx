@@ -65,7 +65,7 @@ export default function Navigation() {
           {/* Desktop Right Section */}
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/contribute-salary">
-              <Button >
+              <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Contribute
               </Button>
@@ -145,7 +145,7 @@ export default function Navigation() {
             </SheetTrigger>
 
             <SheetContent side="right" className="w-[300px]">
-              <div className="flex flex-col space-y-4 mt-8">
+              <div className="flex flex-col space-y-1 mt-8">
                 {navItems.map((item) => {
                   const isDisabled = item.label === "Are You Paid Fairly?";
                   return (
@@ -170,7 +170,7 @@ export default function Navigation() {
                 <div className="pt-4 border-t space-y-2">
                   {!userInfo ? (
                     <Link href="/auth/login">
-                      <Button variant="outline" className="w-full">
+                      <Button variant="default" className="w-full">
                         Login
                       </Button>
                     </Link>
@@ -187,6 +187,32 @@ export default function Navigation() {
               </div>
             </SheetContent>
           </Sheet>
+        </div>
+      </div>
+
+      {/* Bottom Row - Desktop Navigation */}
+      <div className="hidden md:block border-t">
+        <div className="container mx-auto px-4">
+          <div className="flex h-12 items-center justify-start space-x-8">
+            {navItems.map((item) => {
+              const isDisabled = item.label === "Are You Paid Fairly?";
+
+              return (
+                <Link
+                  key={item.href}
+                  href={isDisabled ? "#" : item.href}
+                  onClick={(e) => isDisabled && e.preventDefault()}
+                  className={`text-sm font-medium transition-colors ${
+                    isDisabled
+                      ? "text-gray-400 cursor-not-allowed pointer-events-none"
+                      : "hover:text-primary"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
