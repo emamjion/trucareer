@@ -1,6 +1,7 @@
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,7 +26,10 @@ html {
 }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster position="top-center" richColors closeButton />
+      </body>
     </html>
   );
 }

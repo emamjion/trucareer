@@ -41,13 +41,18 @@ export default function LoginPage() {
   const onSubmit: SubmitHandler<LoginProps> = async (data: LoginProps) => {
     try {
       const response = await loginUser(data);
+      console.log("Response:: ", response);
+
       if (response?.token) {
-        storeUserInfo({ token: response?.token });
+        storeUserInfo({ token: response.token });
+
         toast.success(response?.message || "Login successful!");
         router.push("/");
       }
     } catch (error: any) {
-      console.log("Error during login: ", error.message);
+      console.log("Error during login:", error);
+
+      toast.error(error?.message || "Something went wrong. Please try again.");
     }
   };
 

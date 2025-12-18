@@ -14,6 +14,12 @@ export const loginUser = async (data: LoginProps) => {
       cache: "no-store",
     }
   );
-  const userInfo = await response.json();
-  return userInfo;
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result?.message || "Login failed");
+  }
+
+  return result;
 };
