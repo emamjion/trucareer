@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { updateProfile } from "@/services/profile";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,14 +19,18 @@ interface ProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userInfo: any;
+  onProfileUpdate: (user: any) => void;
 }
 
 export default function ProfileDialog({
   open,
   onOpenChange,
+  onProfileUpdate,
   userInfo,
 }: ProfileDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -35,15 +40,17 @@ export default function ProfileDialog({
   });
 
   useEffect(() => {
-    if (userInfo) {
-      setFormData({
-        name: userInfo?.name || "",
-        email: userInfo?.email || "",
-      });
-      setPreviewImage(userInfo?.profileImg || null);
-    }
-  }, [userInfo]);
+    if (!userInfo || !open) return;
 
+    setFormData({
+      name: userInfo.name || "",
+      email: userInfo.email || "",
+    });
+
+    setPreviewImage(userInfo.profileImg || null);
+  }, [userInfo, open]);
+
+  /* ================= HANDLERS ================= */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -61,6 +68,7 @@ export default function ProfileDialog({
     setPreviewImage(URL.createObjectURL(file));
   };
 
+  /* ================= UPDATE PROFILE ================= */
   const handleSave = async () => {
     try {
       const payload = new FormData();
@@ -70,10 +78,12 @@ export default function ProfileDialog({
         payload.append("profileImg", selectedFile);
       }
 
-      // 🔥 future backend call
-      // await updateProfile(payload);
+      const res = await updateProfile(payload);
 
-      toast.success("Profile updated successfully");
+      toast.success(res.message || "Profile updated successfully");
+
+      onProfileUpdate(res.data);
+
       setIsEditing(false);
       onOpenChange(false);
     } catch (error) {
@@ -94,13 +104,10 @@ export default function ProfileDialog({
         {/* Avatar */}
         <div className="flex flex-col items-center gap-3">
           <Avatar className="h-20 w-20">
-            <AvatarImage
-              src={previewImage || "/placeholder.svg?height=80&width=80"}
-            />
+            <AvatarImage src={previewImage || "/placeholder.svg"} />
             <AvatarFallback>{formData.name?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
 
-          {/* Change Picture */}
           {isEditing && (
             <>
               <Label
@@ -122,7 +129,7 @@ export default function ProfileDialog({
 
         {/* Form */}
         <div className="space-y-4 mt-4">
-          <div className="space-y-1">
+          <div>
             <Label>Name</Label>
             <Input
               name="name"
@@ -132,7 +139,7 @@ export default function ProfileDialog({
             />
           </div>
 
-          <div className="space-y-1">
+          <div>
             <Label>Email</Label>
             <Input value={formData.email} disabled />
           </div>
@@ -154,16 +161,18 @@ export default function ProfileDialog({
                 onClick={() => {
                   setIsEditing(false);
                   setSelectedFile(null);
-                  setPreviewImage(userInfo?.profileImg || null);
+                  setPreviewImage(userInfo?.profileImg);
                   setFormData({
-                    name: userInfo?.name || "",
-                    email: userInfo?.email || "",
+                    name: userInfo?.name,
+                    email: userInfo?.email,
                   });
                 }}
               >
                 Cancel
               </Button>
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
             </>
           )}
         </div>

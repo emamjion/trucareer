@@ -22,6 +22,7 @@ import {
   isLoggedIn,
   removeUserInfo,
 } from "@/services/auth.services";
+import { getProfile } from "@/services/profile";
 import ProfileDialog from "./ProfileDialog";
 
 export default function Navigation() {
@@ -38,6 +39,14 @@ export default function Navigation() {
     { href: "/contribute-salary", label: "Contribute Your Salary" },
     { href: "/paid-fairly", label: "Are You Paid Fairly?" },
   ];
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const res = await getProfile();
+      setUserInfo(res.data);
+    };
+    loadProfile();
+  }, []);
 
   useEffect(() => {
     if (isLoggedIn()) {
@@ -220,6 +229,9 @@ export default function Navigation() {
         open={profileDialogOpen}
         onOpenChange={setProfileDialogOpen}
         userInfo={userInfo}
+        onProfileUpdate={(updatedUser) => {
+          setUserInfo(updatedUser);
+        }}
       />
     </nav>
   );
