@@ -17,9 +17,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { registerUser } from "@/services/actions/registerUser";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-type RegisterFormValues = {
+export type RegisterFormValues = {
   name: string;
   email: string;
   password: string;
@@ -38,6 +40,7 @@ type RegisterFormValues = {
 */
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -51,14 +54,13 @@ export default function RegisterPage() {
 
   const password = watch("password");
 
-  // ✅ submit handler
-  const onSubmit = (data: RegisterFormValues) => {
-    console.log("Register data:", data);
+  const onSubmit = async (data: RegisterFormValues) => {
+    const result = await registerUser(data);
 
-    // 🔥 future API call
-    // await registerUser(data);
-
-    toast.success("Account created successfully");
+    if (result?.success) {
+      router.push("/auth/login");
+      toast.success(result?.message || "Account created successfully!!");
+    }
   };
 
   return (
