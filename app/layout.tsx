@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Trucareer",
-  description: "This is a Salary based job website",
+  description: "This is a Salary based website",
   generator: "Emam Jion",
 };
 
