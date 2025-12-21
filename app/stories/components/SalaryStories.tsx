@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -20,119 +28,32 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-// Mock data
-const salaryStories = [
-  {
-    id: 1,
-    jobTitle: "Senior Software Engineer",
-    companyName: "Tech Solutions Ltd",
-    location: "Dhaka, Bangladesh",
-    yearsOfExperience: "5-7",
-    currency: "BDT",
-    startingSalary: 80000,
-    currentSalary: 150000,
-    story:
-      "Started as a junior developer and worked my way up. The company has great learning opportunities and supportive management. Work-life balance is decent, though sometimes we have tight deadlines. The tech stack is modern and they invest in employee training.",
-    tips: "Focus on learning new technologies and don't be afraid to ask questions. Negotiate your salary based on market rates and your contributions. Build good relationships with your team members.",
-    isAnonymous: true,
-    submittedAt: "2024-01-15",
-  },
-  {
-    id: 2,
-    jobTitle: "Marketing Manager",
-    companyName: "Digital Marketing Pro",
-    location: "Chittagong, Bangladesh",
-    yearsOfExperience: "3-5",
-    currency: "BDT",
-    startingSalary: 45000,
-    currentSalary: 85000,
-    story:
-      "Great company culture with lots of creative freedom. Management trusts the team to deliver results. Remote work options available. Good growth opportunities for those who show initiative.",
-    tips: "Build a strong portfolio and stay updated with digital marketing trends. Certifications in Google Ads and Facebook Marketing really help in salary negotiations.",
-    isAnonymous: true,
-    submittedAt: "2024-01-14",
-  },
-  {
-    id: 3,
-    jobTitle: "Data Analyst",
-    companyName: "FinTech Innovations",
-    location: "Dhaka, Bangladesh",
-    yearsOfExperience: "2-3",
-    currency: "BDT",
-    startingSalary: 55000,
-    currentSalary: 75000,
-    story:
-      "Fast-paced environment with lots of learning opportunities. The company is growing rapidly and there's room for career advancement. Good benefits package including health insurance and annual bonuses.",
-    tips: "Learn SQL, Python, and data visualization tools like Tableau. Understanding business context is as important as technical skills. Don't hesitate to present your findings to stakeholders.",
-    isAnonymous: false,
-    name: "Sarah Ahmed",
-    submittedAt: "2024-01-13",
-  },
-  {
-    id: 4,
-    jobTitle: "UI/UX Designer",
-    companyName: "Creative Agency BD",
-    location: "Dhaka, Bangladesh",
-    yearsOfExperience: "3-5",
-    currency: "BDT",
-    startingSalary: 40000,
-    currentSalary: 90000,
-    story:
-      "Amazing creative environment with talented designers. Clients are mostly international which gives exposure to global design trends. Flexible working hours and good work-life balance.",
-    tips: "Build a strong portfolio showcasing diverse projects. Stay updated with design trends and tools. Learn basic front-end development to better collaborate with developers.",
-    isAnonymous: true,
-    submittedAt: "2024-01-12",
-  },
-  {
-    id: 5,
-    jobTitle: "DevOps Engineer",
-    companyName: "Cloud Systems Inc",
-    location: "Dhaka, Bangladesh",
-    yearsOfExperience: "5-7",
-    currency: "BDT",
-    startingSalary: 90000,
-    currentSalary: 180000,
-    story:
-      "High-demand role with excellent compensation. Company invests heavily in cloud infrastructure and latest tools. Challenging work but very rewarding. Great team collaboration and knowledge sharing culture.",
-    tips: "Get certified in AWS/Azure/GCP. Learn Infrastructure as Code tools like Terraform. Understanding both development and operations is crucial. Automation skills are highly valued.",
-    isAnonymous: true,
-    submittedAt: "2024-01-11",
-  },
-  {
-    id: 6,
-    jobTitle: "Product Manager",
-    companyName: "E-commerce Giant",
-    location: "Dhaka, Bangladesh",
-    yearsOfExperience: "7-10",
-    currency: "BDT",
-    startingSalary: 120000,
-    currentSalary: 250000,
-    story:
-      "Leading product strategy for multiple product lines. Great exposure to business strategy and user research. Company has strong product culture and data-driven decision making. Excellent growth opportunities.",
-    tips: "Develop strong analytical and communication skills. Understand your users deeply through research. Learn to work with cross-functional teams. Business acumen is as important as technical knowledge.",
-    isAnonymous: true,
-    submittedAt: "2024-01-10",
-  },
-];
+interface SalaryStory {
+  _id: string;
+  designation: string;
+  companyName: string;
+  location: string;
+  experience: string;
+  totalMonthly: number;
+  minimumIncrement: number;
+  storyTitle?: string;
+  storyDescription?: string;
+  pros?: string[];
+  cons?: string[];
+  isAnonymous: boolean;
+  createdAt: string;
+  type: string;
+}
 
-const experienceRanges = [
-  "All",
-  "0-1",
-  "1-2",
-  "2-3",
-  "3-5",
-  "5-7",
-  "7-10",
-  "10+",
-];
+const experienceRanges = ["All", "0", "1", "2", "3", "4", "5", "6", "7+"];
 const locations = [
   "All",
   "Dhaka",
   "Chittagong",
-  "Sylhet",
   "Rajshahi",
+  "Sylhet",
   "Khulna",
 ];
 const sortOptions = [
@@ -142,322 +63,279 @@ const sortOptions = [
   { value: "salary-low", label: "Lowest Salary" },
 ];
 
-export default function SalaryStorie() {
+const ITEMS_PER_PAGE = 5;
+
+export default function SalaryStories() {
+  const [stories, setStories] = useState<SalaryStory[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExperience, setSelectedExperience] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
-  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const formatSalary = (amount: number, currency: string) => {
-    const symbol = currency === "BDT" ? "৳" : currency === "USD" ? "$" : "€";
-    return `${symbol}${amount.toLocaleString()}`;
+  /* ---------------- FETCH ---------------- */
+  useEffect(() => {
+    const fetchStories = async () => {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BACKEND_URL}/admin/salaries`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const json = await res.json();
+      setStories(json.data.filter((d: SalaryStory) => d.type === "story"));
+      setLoading(false);
+    };
+
+    fetchStories();
+  }, []);
+
+  /* Reset page on filter change */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedExperience, selectedLocation, sortBy]);
+
+  /* ---------------- HELPERS ---------------- */
+  const formatSalary = (n: number) => `৳${n.toLocaleString()}`;
+
+  const toggleCard = (id: string) => {
+    const copy = new Set(expandedCards);
+    copy.has(id) ? copy.delete(id) : copy.add(id);
+    setExpandedCards(copy);
   };
 
-  const calculateGrowth = (starting: number, current: number) => {
-    const growth = ((current - starting) / starting) * 100;
-    return Math.round(growth);
-  };
+  /* ---------------- FILTER + SORT ---------------- */
+  const filteredStories = stories
+    .filter((s) => {
+      const search =
+        s.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.companyName.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const toggleCard = (id: number) => {
-    const newExpanded = new Set(expandedCards);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedCards(newExpanded);
-  };
+      const exp =
+        selectedExperience === "All" || s.experience === selectedExperience;
 
-  const filteredStories = salaryStories
-    .filter((story) => {
-      const matchesSearch =
-        story.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        story.companyName.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesExperience =
-        selectedExperience === "All" ||
-        story.yearsOfExperience === selectedExperience;
-      const matchesLocation =
+      const loc =
         selectedLocation === "All" ||
-        story.location.toLowerCase().includes(selectedLocation.toLowerCase());
-      return matchesSearch && matchesExperience && matchesLocation;
+        s.location.toLowerCase().includes(selectedLocation.toLowerCase());
+
+      return search && exp && loc;
     })
     .sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.submittedAt).getTime() -
-            new Date(a.submittedAt).getTime()
-          );
-        case "oldest":
-          return (
-            new Date(a.submittedAt).getTime() -
-            new Date(b.submittedAt).getTime()
-          );
-        case "salary-high":
-          return b.currentSalary - a.currentSalary;
-        case "salary-low":
-          return a.currentSalary - b.currentSalary;
-        default:
-          return 0;
-      }
+      if (sortBy === "newest")
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      if (sortBy === "oldest")
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      if (sortBy === "salary-high") return b.totalMonthly - a.totalMonthly;
+      if (sortBy === "salary-low") return a.totalMonthly - b.totalMonthly;
+      return 0;
     });
 
+  /* ---------------- PAGINATION ---------------- */
+  const totalPages = Math.ceil(filteredStories.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedStories = filteredStories.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  if (loading) {
+    return <div className="py-20 text-center">Loading...</div>;
+  }
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-black mb-2">
-              Salary Stories
-            </h1>
-            <p className="text-gray-600">
-              Real salary experiences from professionals across Bangladesh
-            </p>
-          </div>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold">Salary Stories</h1>
+        <p className="text-gray-600">
+          Real salary experiences from professionals across Bangladesh
+        </p>
+      </div>
 
-          {/* Search and Filters */}
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by job title or company..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 border-gray-300"
-              />
-            </div>
+      {/* Search + Filters */}
+      <div className="space-y-4 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            className="pl-10"
+            placeholder="Search job or company..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select
-                value={selectedExperience}
-                onValueChange={setSelectedExperience}
-              >
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Experience Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {experienceRanges.map((range) => (
-                    <SelectItem key={range} value={range}>
-                      {range === "All" ? "All Experience" : `${range} years`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <div className="grid md:grid-cols-3 gap-4">
+          <Select
+            value={selectedExperience}
+            onValueChange={setSelectedExperience}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Experience" />
+            </SelectTrigger>
+            <SelectContent>
+              {experienceRanges.map((e) => (
+                <SelectItem key={e} value={e}>
+                  {e === "All" ? "All Experience" : `${e} years`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-              <Select
-                value={selectedLocation}
-                onValueChange={setSelectedLocation}
-              >
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location} value={location}>
-                      {location === "All" ? "All Locations" : location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger>
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Stories List */}
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <p className="text-gray-600">
-            Showing{" "}
-            <span className="font-medium text-black">
-              {filteredStories.length}
-            </span>{" "}
-            salary stories
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {filteredStories.map((story) => (
-            <Card
-              key={story.id}
-              className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-0">
-                {/* Main Card Header */}
-                <div
-                  className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50"
-                  onClick={() => toggleCard(story.id)}
-                >
-                  <div className="flex-1">
-                    {/* Job Title */}
-                    <h3 className="text-xl font-semibold text-black mb-2">
-                      {story.jobTitle}
-                    </h3>
-
-                    {/* Salary Info */}
-                    <div className="flex items-center gap-6 mb-3">
-                      <div>
-                        <span className="text-2xl font-bold text-black">
-                          {formatSalary(story.currentSalary, story.currency)}
-                        </span>
-                        <span className="text-gray-500 ml-2">current</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <span>
-                          Started at{" "}
-                          {formatSalary(story.startingSalary, story.currency)}
-                        </span>
-                        <span className="ml-2 font-medium text-black">
-                          (+
-                          {calculateGrowth(
-                            story.startingSalary,
-                            story.currentSalary
-                          )}
-                          %)
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Company & Location */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Building className="h-4 w-4" />
-                        <span>{story.companyName}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{story.location}</span>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="text-xs border-gray-300"
-                      >
-                        {story.yearsOfExperience} years
-                      </Badge>
-                    </div>
+      {/* Stories */}
+      <div className="space-y-4">
+        {paginatedStories.map((s) => (
+          <Card key={s._id}>
+            <CardContent className="p-0">
+              <div
+                className="p-6 flex justify-between cursor-pointer hover:bg-gray-50"
+                onClick={() => toggleCard(s._id)}
+              >
+                <div>
+                  <h3 className="text-xl font-semibold">{s.designation}</h3>
+                  <div className="mt-2 font-bold text-2xl">
+                    {formatSalary(s.totalMonthly)}
                   </div>
 
-                  {/* Plus/Minus Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-4 h-8 w-8 p-0 hover:bg-gray-100"
-                  >
-                    {expandedCards.has(story.id) ? (
-                      <Minus className="h-4 w-4" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <div className="flex gap-4 mt-3 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <Building className="h-4 w-4" />
+                      {s.companyName}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {s.location}
+                    </span>
+                    <Badge variant="outline">{s.experience} yrs</Badge>
+                  </div>
                 </div>
 
-                {/* Expanded Content */}
-                {expandedCards.has(story.id) && (
-                  <div className="border-t border-gray-200 bg-gray-50">
-                    <div className="p-6 space-y-6">
-                      {/* Salary Details */}
-                      <div className="grid grid-cols-3 gap-4 p-4 bg-white rounded border border-gray-200">
-                        <div className="text-center">
-                          <div className="text-lg font-semibold text-black">
-                            {formatSalary(story.startingSalary, story.currency)}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Starting Salary
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-lg font-semibold text-black">
-                            +
-                            {calculateGrowth(
-                              story.startingSalary,
-                              story.currentSalary
-                            )}
-                            %
-                          </div>
-                          <div className="text-sm text-gray-500">Growth</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-lg font-semibold text-black">
-                            {formatSalary(story.currentSalary, story.currency)}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Current Salary
-                          </div>
-                        </div>
-                      </div>
+                <Button variant="ghost" size="icon">
+                  {expandedCards.has(s._id) ? <Minus /> : <Plus />}
+                </Button>
+              </div>
 
-                      {/* Story */}
-                      {story.story && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-black">
-                            Experience
-                          </h4>
-                          <p className="text-gray-700 leading-relaxed bg-white p-4 rounded border border-gray-200">
-                            {story.story}
-                          </p>
-                        </div>
-                      )}
+              {expandedCards.has(s._id) && (
+                <div className="border-t bg-gray-50 p-6 space-y-4">
+                  {s.storyTitle && (
+                    <h4 className="font-semibold">{s.storyTitle}</h4>
+                  )}
+                  {s.storyDescription && (
+                    <p className="bg-white p-4 rounded border">
+                      {s.storyDescription}
+                    </p>
+                  )}
 
-                      {/* Tips */}
-                      {story.tips && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-black">Advice</h4>
-                          <p className="text-gray-700 leading-relaxed bg-white p-4 rounded border border-gray-200">
-                            {story.tips}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200 text-sm text-gray-500">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>
-                            {story.isAnonymous
-                              ? "Anonymous"
-                              : story.name || "Anonymous"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            {new Date(story.submittedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
+                  {s.pros?.length ? (
+                    <div>
+                      <h4 className="font-semibold">Pros</h4>
+                      <ul className="list-disc pl-5">
+                        {s.pros.map((p, i) => (
+                          <li key={i}>{p}</li>
+                        ))}
+                      </ul>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  ) : null}
 
-        {filteredStories.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">📄</div>
-            <h3 className="text-lg font-semibold text-black mb-2">
-              No stories found
-            </h3>
-            <p className="text-gray-600">Try adjusting your search criteria.</p>
-          </div>
-        )}
+                  {s.cons?.length ? (
+                    <div>
+                      <h4 className="font-semibold">Cons</h4>
+                      <ul className="list-disc pl-5">
+                        {s.cons.map((c, i) => (
+                          <li key={i}>{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  <div className="flex justify-between text-sm text-gray-500 pt-4 border-t">
+                    <span className="flex items-center gap-1">
+                      <User className="h-4 w-4" />
+                      {s.isAnonymous ? "Anonymous" : "User"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {new Date(s.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination className="mt-8">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              />
+            </PaginationItem>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink
+                  isActive={currentPage === i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className="cursor-pointer"
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }

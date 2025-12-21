@@ -12,670 +12,258 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeft,
-  ArrowLeftIcon,
-  ArrowRight,
-  Briefcase,
-  CheckCircle2,
-  DollarSign,
-  Lightbulb,
-  Loader2,
-  MapPin,
-  MessageSquare,
-  Shield,
-  TrendingUp,
-  User,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, MapPin } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 
+/* ---------------- ZOD SCHEMA ---------------- */
 const formSchema = z.object({
-  name: z.string().optional(),
-  isAnonymous: z.boolean().default(false),
-  jobTitle: z.string().min(1, "Job title is required"),
-  companyName: z.string().min(1, "Company name is required"),
-  location: z.string().min(1, "Location is required"),
-  yearsOfExperience: z.string().min(1, "Years of experience is required"),
-  currency: z.string().default("BDT"),
-  startingSalary: z
-    .string()
-    .min(1, "Starting salary is required")
-    .refine(
-      (val) => !isNaN(Number(val)) && Number(val) > 0,
-      "Must be a valid positive number"
-    ),
-  currentSalary: z
-    .string()
-    .min(1, "Current salary is required")
-    .refine(
-      (val) => !isNaN(Number(val)) && Number(val) > 0,
-      "Must be a valid positive number"
-    ),
-  story: z.string().optional(),
-  tips: z.string().optional(),
+  companyName: z.string().min(1, "Company name required"),
+  designation: z.string().min(1, "Designation required"),
+  location: z.string().min(1, "Location required"),
+
+  experienceLevel: z.enum(["Entry", "Mid", "Senior", "Lead", "Manager"]),
+  experience: z.string().min(1, "Experience required"),
+
+  totalMonthly: z.string().refine((v) => !isNaN(Number(v)), "Invalid salary"),
+  whichYearsSalary: z.string(),
+
+  minimumIncrement: z.string().optional(),
+  yearsOfIncrement: z.string().optional(),
+
+  gender: z.enum(["Male", "Female", "Other", "Prefer not to say"]),
+  employmentType: z.enum(["Full-time", "Part-time", "Contract", "Internship"]),
+  department: z.string().optional(),
+
+  storyTitle: z.string().min(1, "Story title required"),
+  storyDescription: z.string().optional(),
+
+  isAnonymous: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-const currencies = [
-  { value: "BDT", label: "BDT (৳)", symbol: "৳" },
-  { value: "USD", label: "USD ($)", symbol: "$" },
-  { value: "EUR", label: "EUR (€)", symbol: "€" },
-  { value: "GBP", label: "GBP (£)", symbol: "£" },
-  { value: "INR", label: "INR (₹)", symbol: "₹" },
-];
-
-const experienceOptions = [
-  { value: "0-1", label: "0-1 years" },
-  { value: "1-2", label: "1-2 years" },
-  { value: "2-3", label: "2-3 years" },
-  { value: "3-5", label: "3-5 years" },
-  { value: "5-7", label: "5-7 years" },
-  { value: "7-10", label: "7-10 years" },
-  { value: "10+", label: "10+ years" },
-];
-
-const tabs = [
-  { id: "personal", label: "Personal Info", icon: User },
-  { id: "job", label: "Job Details", icon: Briefcase },
-  { id: "salary", label: "Salary Info", icon: DollarSign },
-  { id: "experience", label: "Your Story", icon: MessageSquare },
-];
-
+/* ---------------- COMPONENT ---------------- */
 export default function ContributeSalary() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("personal");
-  const { toast } = useToast();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
     reset,
-    trigger,
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      currency: "BDT",
-      isAnonymous: false,
+      isAnonymous: true,
     },
   });
 
-  const isAnonymous = watch("isAnonymous");
-  const selectedCurrency = watch("currency");
-
+  /* ---------------- SUBMIT ---------------- */
   const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        type: "story",
+        companyName: data.companyName,
+        designation: data.designation,
+        location: data.location,
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+        experienceLevel: data.experienceLevel,
+        experience: data.experience,
 
-    console.log("Form submitted:", data);
+        totalMonthly: Number(data.totalMonthly),
+        whichYearsSalary: Number(data.whichYearsSalary),
+        minimumIncrement: Number(data.minimumIncrement || 0),
+        yearsOfIncrement: Number(data.yearsOfIncrement || 0),
 
-    toast({
-      title: "Success!",
-      description:
-        "Your salary information has been submitted successfully. Thank you for contributing!",
-    });
+        gender: data.gender,
+        employmentType: data.employmentType,
+        department: data.department,
 
-    reset();
-    setActiveTab("personal");
-    setShowConfirmation(false);
-    setIsSubmitting(false);
-  };
+        storyTitle: data.storyTitle,
+        storyDescription: data.storyDescription,
 
-  const handleNext = async () => {
-    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
-    if (currentIndex < tabs.length - 1) {
-      // Validate current tab before moving to next
-      let isValid = true;
+        isAnonymous: data.isAnonymous,
+      };
 
-      if (activeTab === "personal") {
-        // No required fields in personal tab
-      } else if (activeTab === "job") {
-        isValid = await trigger([
-          "jobTitle",
-          "companyName",
-          "location",
-          "yearsOfExperience",
-        ]);
-      } else if (activeTab === "salary") {
-        isValid = await trigger(["startingSalary", "currentSalary"]);
-      }
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BACKEND_URL}/admin/create-salary`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-      if (isValid) {
-        setActiveTab(tabs[currentIndex + 1].id);
-      }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+
+      toast.success(result?.message || "Salary contiributed successfully");
+
+      reset();
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
     }
   };
 
-  const handlePrevious = () => {
-    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
-    if (currentIndex > 0) {
-      setActiveTab(tabs[currentIndex - 1].id);
-    }
-  };
-
+  /* ---------------- UI ---------------- */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-      <div className="">
-        {/* Header */}
-        <Link href={"/"} className="group">
-          <Button variant={"outline"} size={"sm"}>
-            <ArrowLeftIcon className="group-hover:-translate-x-1 duration-150" />
-            <span className="hidden md:block">Back Home</span>
-          </Button>
-        </Link>
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-900 rounded-xl mb-4">
-            <TrendingUp className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-4">
-            Contribute Your Salary Experience
-          </h1>
-          <p className=" text-slate-600 max-w-2xl mx-auto">
-            Help others understand the salary landscape by sharing your
-            experience. Your identity will be kept confidential and your
-            contribution will help build transparency in the job market.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 py-10 px-4">
+      <Link href="/" className="inline-flex mb-6">
+        <Button variant="outline">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        </Button>
+      </Link>
 
-        <Card className="shadow-xl border-0 max-w-4xl mx-auto">
-          <CardContent className="p-0">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <div className="border-b bg-slate-50/50 px-6 py-4">
-                <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <TabsTrigger
-                        key={tab.id}
-                        value={tab.id}
-                        className="flex items-center gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white"
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span className="hidden sm:inline">{tab.label}</span>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
+      <Card className="max-w-4xl mx-auto pt-6">
+        <CardContent className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-center">
+              Contribute Your Salary Story
+            </h1>
+            <p className="text-center mt-2 text-gray-600">
+              Help others understand the salary landscape by sharing your
+              experience. Your identity will be kept confidential and your
+              contribution will help build transparency in the job market.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* ANONYMOUS */}
+            <div className="flex items-center justify-between border p-4 rounded-lg">
+              <div>
+                <Label className="font-medium">Submit Anonymously</Label>
+                <p className="text-sm text-slate-500">
+                  Your identity will not be shared
+                </p>
+              </div>
+              <Switch
+                checked={watch("isAnonymous")}
+                onCheckedChange={(v) => setValue("isAnonymous", v)}
+              />
+            </div>
+
+            {/* JOB INFO */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input placeholder="Company Name" {...register("companyName")} />
+              <Input placeholder="Designation" {...register("designation")} />
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  className="pl-9"
+                  placeholder="Location"
+                  {...register("location")}
+                />
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="p-6">
-                {/* Personal Information Tab */}
-                <TabsContent value="personal" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <User className="h-6 w-6 text-slate-600" />
-                      <div>
-                        <h3 className=" font-semibold text-slate-900">
-                          Personal Information
-                        </h3>
-                        <p className="text-slate-600">
-                          Your personal details (optional and confidential)
-                        </p>
-                      </div>
-                    </div>
+              <Select
+                onValueChange={(v) => setValue("experienceLevel", v as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Experience Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Entry">Entry</SelectItem>
+                  <SelectItem value="Mid">Mid</SelectItem>
+                  <SelectItem value="Senior">Senior</SelectItem>
+                  <SelectItem value="Lead">Lead</SelectItem>
+                  <SelectItem value="Manager">Manager</SelectItem>
+                </SelectContent>
+              </Select>
 
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="anonymous"
-                          className="text-base font-medium text-slate-800"
-                        >
-                          Submit Anonymously
-                        </Label>
-                        <p className="text-sm text-slate-600">
-                          Your name will not be stored or displayed
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-green-600">
-                          <Shield className="h-4 w-4" />
-                          <span>Your privacy is protected</span>
-                        </div>
-                      </div>
-                      <Switch
-                        id="anonymous"
-                        checked={isAnonymous}
-                        onCheckedChange={(checked) =>
-                          setValue("isAnonymous", checked)
-                        }
-                      />
-                    </div>
+              <Input
+                placeholder="Years of Experience"
+                {...register("experience")}
+              />
+            </div>
 
-                    {!isAnonymous && (
-                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                        <Label
-                          htmlFor="name"
-                          className="text-slate-700 font-medium"
-                        >
-                          Full Name (Optional)
-                        </Label>
-                        <Input
-                          id="name"
-                          placeholder="Enter your full name"
-                          className="h-11"
-                          {...register("name")}
-                        />
-                        {errors.name && (
-                          <p className="text-sm text-red-600">
-                            {errors.name.message}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
+            {/* SALARY INFO */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input
+                placeholder="Monthly Salary"
+                {...register("totalMonthly")}
+              />
+              <Input
+                placeholder="Salary Year (2025)"
+                {...register("whichYearsSalary")}
+              />
 
-                {/* Job Information Tab */}
-                <TabsContent value="job" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Briefcase className="h-6 w-6 text-slate-600" />
-                      <div>
-                        <h3 className="text-xl font-semibold text-slate-900">
-                          Job Information
-                        </h3>
-                        <p className="text-slate-600">
-                          Details about your current or previous role
-                        </p>
-                      </div>
-                    </div>
+              <Input
+                placeholder="Minimum Increment (%)"
+                {...register("minimumIncrement")}
+              />
+              <Input
+                placeholder="Years of Increment"
+                {...register("yearsOfIncrement")}
+              />
+            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="jobTitle"
-                          className="text-slate-700 font-medium"
-                        >
-                          Job Title *
-                        </Label>
-                        <Input
-                          id="jobTitle"
-                          placeholder="e.g., Software Engineer, Marketing Manager"
-                          className="h-11"
-                          {...register("jobTitle")}
-                        />
-                        {errors.jobTitle && (
-                          <p className="text-sm text-red-600">
-                            {errors.jobTitle.message}
-                          </p>
-                        )}
-                      </div>
+            {/* META */}
+            <div className="grid md:grid-cols-3 gap-4">
+              <Select onValueChange={(v) => setValue("gender", v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Prefer not to say">
+                    Prefer not to say
+                  </SelectItem>
+                </SelectContent>
+              </Select>
 
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="companyName"
-                          className="text-slate-700 font-medium"
-                        >
-                          Company Name *
-                        </Label>
-                        <Input
-                          id="companyName"
-                          placeholder="e.g., Google, Microsoft, Local Startup"
-                          className="h-11"
-                          {...register("companyName")}
-                        />
-                        {errors.companyName && (
-                          <p className="text-sm text-red-600">
-                            {errors.companyName.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              <Select
+                onValueChange={(v) => setValue("employmentType", v as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Employment Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Full-time">Full-time</SelectItem>
+                  <SelectItem value="Part-time">Part-time</SelectItem>
+                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Internship">Internship</SelectItem>
+                </SelectContent>
+              </Select>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="location"
-                          className="text-slate-700 font-medium"
-                        >
-                          Location *
-                        </Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                          <Input
-                            id="location"
-                            placeholder="e.g., Dhaka, Bangladesh"
-                            className="h-11 pl-10"
-                            {...register("location")}
-                          />
-                        </div>
-                        {errors.location && (
-                          <p className="text-sm text-red-600">
-                            {errors.location.message}
-                          </p>
-                        )}
-                      </div>
+              <Input placeholder="Department" {...register("department")} />
+            </div>
 
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="yearsOfExperience"
-                          className="text-slate-700 font-medium"
-                        >
-                          Years of Experience *
-                        </Label>
-                        <Select
-                          onValueChange={(value) =>
-                            setValue("yearsOfExperience", value)
-                          }
-                        >
-                          <SelectTrigger className="h-11">
-                            <SelectValue placeholder="Select experience range" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {experienceOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.yearsOfExperience && (
-                          <p className="text-sm text-red-600">
-                            {errors.yearsOfExperience.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
+            {/* STORY */}
+            <div className="space-y-3">
+              <Input placeholder="Story Title" {...register("storyTitle")} />
+              <Textarea
+                placeholder="Share your experience..."
+                className="min-h-[120px]"
+                {...register("storyDescription")}
+              />
+            </div>
 
-                {/* Salary Information Tab */}
-                <TabsContent value="salary" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <DollarSign className="h-6 w-6 text-slate-600" />
-                      <div>
-                        <h3 className="text-xl font-semibold text-slate-900">
-                          Salary Information
-                        </h3>
-                        <p className="text-slate-600">
-                          Your compensation details (all amounts will be kept
-                          confidential)
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="currency"
-                        className="text-slate-700 font-medium"
-                      >
-                        Currency
-                      </Label>
-                      <Select
-                        value={selectedCurrency}
-                        onValueChange={(value) => setValue("currency", value)}
-                      >
-                        <SelectTrigger className="h-11 w-full md:w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currencies.map((currency) => (
-                            <SelectItem
-                              key={currency.value}
-                              value={currency.value}
-                            >
-                              {currency.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="startingSalary"
-                          className="text-slate-700 font-medium"
-                        >
-                          Starting Salary *
-                        </Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-3 text-slate-400 text-sm">
-                            {currencies.find(
-                              (c) => c.value === selectedCurrency
-                            )?.symbol || "৳"}
-                          </span>
-                          <Input
-                            id="startingSalary"
-                            type="number"
-                            placeholder="50000"
-                            className="h-11 pl-10"
-                            {...register("startingSalary")}
-                          />
-                        </div>
-                        {errors.startingSalary && (
-                          <p className="text-sm text-red-600">
-                            {errors.startingSalary.message}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="currentSalary"
-                          className="text-slate-700 font-medium"
-                        >
-                          Current Salary *
-                        </Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-3 text-slate-400 text-sm">
-                            {currencies.find(
-                              (c) => c.value === selectedCurrency
-                            )?.symbol || "৳"}
-                          </span>
-                          <Input
-                            id="currentSalary"
-                            type="number"
-                            placeholder="80000"
-                            className="h-11 pl-10"
-                            {...register("currentSalary")}
-                          />
-                        </div>
-                        {errors.currentSalary && (
-                          <p className="text-sm text-red-600">
-                            {errors.currentSalary.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Experience & Story Tab */}
-                <TabsContent value="experience" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <MessageSquare className="h-6 w-6 text-slate-600" />
-                      <div>
-                        <h3 className="text-xl font-semibold text-slate-900">
-                          Your Experience & Advice
-                        </h3>
-                        <p className="text-slate-600">
-                          Share your journey and help others (optional)
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="story"
-                        className="flex items-center gap-2 text-slate-700 font-medium"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        Your Story (Optional)
-                      </Label>
-                      <Textarea
-                        id="story"
-                        placeholder="Share your career journey, challenges you faced, company culture, growth opportunities, or any other experiences that might help others..."
-                        className="min-h-[120px] resize-none"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                            // Allow Ctrl+Enter or Cmd+Enter for new line
-                            return;
-                          } else if (e.key === "Enter" && !e.shiftKey) {
-                            // Prevent form submission on Enter
-                            e.preventDefault();
-                          }
-                        }}
-                        {...register("story")}
-                      />
-                      <p className="text-xs text-slate-500">
-                        Tell us about your experience at this company, career
-                        progression, work-life balance, etc.
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="tips"
-                        className="flex items-center gap-2 text-slate-700 font-medium"
-                      >
-                        <Lightbulb className="h-4 w-4" />
-                        Tips for Others (Optional)
-                      </Label>
-                      <Textarea
-                        id="tips"
-                        placeholder="What advice would you give to someone joining this role or company? Interview tips, skills to focus on, negotiation strategies..."
-                        className="min-h-[120px] resize-none"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                            // Allow Ctrl+Enter or Cmd+Enter for new line
-                            return;
-                          } else if (e.key === "Enter" && !e.shiftKey) {
-                            // Prevent form submission on Enter
-                            e.preventDefault();
-                          }
-                        }}
-                        {...register("tips")}
-                      />
-                      <p className="text-xs text-slate-500">
-                        Share advice for job seekers, interview preparation, or
-                        career growth tips.
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {activeTab === "experience" && showConfirmation && (
-                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-blue-900 mb-1">
-                          Ready to Submit?
-                        </h4>
-                        <p className="text-sm text-blue-700 mb-3">
-                          Please review your information before submitting. Once
-                          submitted, you won't be able to edit your response.
-                        </p>
-                        <div className="text-xs text-blue-600">
-                          ✓ Your data will be kept confidential and secure
-                          <br />✓ Your contribution helps build salary
-                          transparency
-                          <br />✓ You can submit anonymously if selected
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Navigation Buttons */}
-                <div className="flex justify-between items-center pt-6 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePrevious}
-                    disabled={activeTab === "personal"}
-                    className="flex items-center gap-2 bg-transparent"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-
-                  {activeTab === "experience" ? (
-                    <div className="flex items-center gap-3">
-                      {!showConfirmation ? (
-                        <Button
-                          type="button"
-                          onClick={() => setShowConfirmation(true)}
-                          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                          Review & Submit
-                        </Button>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setShowConfirmation(false)}
-                            className="flex items-center gap-2"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="flex items-center gap-2 "
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Submitting...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className="h-4 w-4" />
-                                Confirm & Submit
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={handleNext}
-                      className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800"
-                    >
-                      Next
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </form>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <div className="text-center text-sm text-slate-500 max-w-2xl mx-auto mt-6">
-          <p>
-            By submitting this form, you agree that your information will be
-            used to help others understand salary ranges and career progression.
-            Your personal information will be kept confidential and secure.
-          </p>
-        </div>
-      </div>
+            {/* SUBMIT */}
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Submit Salary Story
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
