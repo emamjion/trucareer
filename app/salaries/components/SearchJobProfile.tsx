@@ -16,6 +16,7 @@ interface Salary {
   companyName: string;
   designation: string;
   location?: string;
+  experience?: string;
   experienceLevel?: string;
   department?: string;
   employmentType?: string;
@@ -28,7 +29,7 @@ const FILTER_FIELDS: {
   key: keyof Salary;
   label: string;
 }[] = [
-  { key: "experienceLevel", label: "Experience" },
+  { key: "experience", label: "Experience" },
   { key: "department", label: "Department" },
   { key: "location", label: "Location" },
   { key: "employmentType", label: "Employment" },
@@ -36,40 +37,56 @@ const FILTER_FIELDS: {
   { key: "qualification", label: "Qualification" },
 ];
 
+const PAGE_SIZE = 6;
+const EXPERIENCE_RANGE = Array.from({ length: 16 }, (_, i) => i.toString());
+
 export default function SearchJobProfile() {
   const [allData, setAllData] = useState<Salary[]>([]);
-  const [selectedDesignation, setSelectedDesignation] = useState<string>("");
+  const [selectedDesignation, setSelectedDesignation] = useState("ALL");
   const [search, setSearch] = useState("");
-
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  /* 🔁 FETCH ALL SALARIES */
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_BACKEND_URL}/salary/salaries`)
       .then((res) => res.json())
       .then((json) => {
-        const data = json.data || [];
-        setAllData(data);
-        setSelectedDesignation(data?.[0]?.designation || "");
+        setAllData(json.data || []);
       });
   }, []);
 
-  /* 🔍 DESIGNATION SEARCH (LOCAL) */
+  const renderOptionLabel = (field: keyof Salary, value: string) => {
+    if (field === "experience") {
+      return value === "0" || value === "1"
+        ? `${value} year`
+        : `${value} years`;
+    }
+
+    return value;
+  };
+
+  const designations = useMemo(() => {
+    const unique = Array.from(new Set(allData.map((i) => i.designation)));
+    return ["ALL", ...unique];
+  }, [allData]);
+
+  /* 🔍 SEARCH DESIGNATION TABS */
   const filteredDesignations = useMemo(() => {
-    const designations = Array.from(new Set(allData.map((i) => i.designation)));
-
     if (!search.trim()) return designations;
-
     return designations.filter((d) =>
       d.toLowerCase().includes(search.toLowerCase())
     );
-  }, [allData, search]);
+  }, [designations, search]);
 
   /* 🧠 FILTERED DATA */
   const filteredData = useMemo(() => {
     return allData.filter((item) => {
-      if (selectedDesignation && item.designation !== selectedDesignation)
+      if (
+        selectedDesignation !== "ALL" &&
+        item.designation !== selectedDesignation
+      ) {
         return false;
+      }
 
       for (const key in filters) {
         if (filters[key] && item[key as keyof Salary] !== filters[key]) {
@@ -81,25 +98,29 @@ export default function SearchJobProfile() {
     });
   }, [allData, selectedDesignation, filters]);
 
-  /* 📌 FILTER OPTIONS */
-  const filterOptions = (field: keyof Salary) =>
-    Array.from(
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedDesignation, filters]);
+
+  const filterOptions = (field: keyof Salary) => {
+    if (field === "experience") {
+      return EXPERIENCE_RANGE;
+    }
+
+    return Array.from(
       new Set(allData.map((i) => i[field]).filter(Boolean))
     ) as string[];
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      {/* 🎛️ FILTERS */}
       <div className="flex flex-wrap gap-3">
         {FILTER_FIELDS.map(({ key, label }) => (
           <Select
             key={key}
             value={filters[key] || ""}
-            onValueChange={(v) =>
-              setFilters((prev) => ({
-                ...prev,
-                [key]: v,
-              }))
-            }
+            onValueChange={(v) => setFilters((prev) => ({ ...prev, [key]: v }))}
           >
             <SelectTrigger className="w-44">
               <SelectValue placeholder={label} />
@@ -107,7 +128,7 @@ export default function SearchJobProfile() {
             <SelectContent>
               {filterOptions(key).map((opt) => (
                 <SelectItem key={opt} value={opt}>
-                  {opt}
+                  {renderOptionLabel(key, opt)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -115,11 +136,11 @@ export default function SearchJobProfile() {
         ))}
       </div>
 
-      {/* 🔍 LOCAL SEARCH (FILTER DESIGNATIONS) */}
+      {/* 🔍 SEARCH DESIGNATION */}
       <div className="relative max-w-xl">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
         <Input
-          placeholder="Search designation inside list..."
+          placeholder="Search designation..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10"
@@ -138,31 +159,31 @@ export default function SearchJobProfile() {
                 : "bg-white hover:bg-slate-100"
             }`}
           >
-            {role}
+            {role === "ALL" ? "All" : role}
           </button>
         ))}
-
-        {filteredDesignations.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No designation matched your search
-          </p>
-        )}
       </div>
 
       {/* 📊 SALARY LIST */}
       <div className="border rounded-lg divide-y bg-white">
-        {filteredData.map((item) => (
+        {filteredData.slice(0, visibleCount).map((item) => (
           <div
             key={item._id}
             className="p-5 flex justify-between items-start gap-6"
           >
             <div>
-              {/* <h3 className="font-semibold">{item.companyName}</h3> */}
               <h3 className="font-semibold">{item.designation}</h3>
-              <p className="text-sm text-muted-foreground">
-                {item.designation}
-                {item.department && ` • ${item.department}`}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  {item.department}
+                </p>
+                <span>•</span>
+                <p className="text-sm text-muted-foreground">
+                  {item.experience == "1" || item.experience == "0"
+                    ? item.experience + " year of experience"
+                    : item.experience + " years of experience"}{" "}
+                </p>
+              </div>
 
               <div className="mt-2 flex gap-2 flex-wrap text-xs text-slate-600">
                 {item.experienceLevel && <span>{item.experienceLevel}</span>}
@@ -186,6 +207,29 @@ export default function SearchJobProfile() {
           </p>
         )}
       </div>
+
+      {/* 👇 SEE MORE / SEE LESS */}
+      {filteredData.length > PAGE_SIZE && (
+        <div className="flex justify-center gap-4">
+          {visibleCount < filteredData.length && (
+            <button
+              onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+              className="px-6 py-2 rounded-md border text-sm font-medium hover:bg-slate-100"
+            >
+              See more
+            </button>
+          )}
+
+          {visibleCount > PAGE_SIZE && (
+            <button
+              onClick={() => setVisibleCount(PAGE_SIZE)}
+              className="px-6 py-2 rounded-md border text-sm font-medium hover:bg-slate-100"
+            >
+              See less
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

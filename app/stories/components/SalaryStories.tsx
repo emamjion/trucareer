@@ -34,6 +34,7 @@ interface SalaryStory {
   _id: string;
   designation: string;
   companyName: string;
+  department: string;
   location: string;
   experience: string;
   totalMonthly: number;
@@ -47,7 +48,25 @@ interface SalaryStory {
   type: string;
 }
 
-const experienceRanges = ["All", "0", "1", "2", "3", "4", "5", "6", "7+"];
+const experienceRanges = [
+  "All",
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+];
 const locations = [
   "All",
   "Dhaka",
@@ -91,6 +110,7 @@ export default function SalaryStories() {
       );
 
       const json = await res.json();
+      console.log("data: ", json);
       setStories(json.data.filter((d: SalaryStory) => d.type === "story"));
       setLoading(false);
     };
@@ -239,7 +259,7 @@ export default function SalaryStories() {
                   <div className="flex gap-4 mt-3 text-sm text-gray-600">
                     <span className="flex items-center gap-1">
                       <Building className="h-4 w-4" />
-                      {s.companyName}
+                      {s.department}
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
